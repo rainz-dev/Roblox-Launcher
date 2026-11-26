@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Windows app: progress window, link registration, and wiring. Logic lives in RobloxLauncher.Core. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Lets the project build (not run) on non-Windows machines, e.g. CI. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>RobloxLauncher</AssemblyName>
+    <RootNamespace>RobloxLauncher</RootNamespace>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RobloxLauncher.Core\RobloxLauncher.Core.csproj" />
+  </ItemGroup>
+
+</Project>
