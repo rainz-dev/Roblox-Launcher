@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Platform-neutral logic (version check, download, install, launch) so it can be unit tested anywhere. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="RobloxLauncher.Core.Tests" />
+  </ItemGroup>
+
+</Project>
