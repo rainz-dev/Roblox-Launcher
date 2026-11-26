@@ -49,9 +49,7 @@
                         <TextBlock x:Name="VersionFooter" DockPanel.Dock="Bottom" Margin="12" FontSize="12" Foreground="{StaticResource MutedBrush}" />
                         <StackPanel DockPanel.Dock="Top">
                             <RadioButton Style="{StaticResource NavItem}" Tag="performance" Content="Performance" IsChecked="True" Checked="OnNavChecked" />
-                            <RadioButton Style="{StaticResource NavItem}" Tag="FastFlags" Checked="OnNavChecked">
-                                <DockPanel><Border DockPanel.Dock="Right" Background="{StaticResource RaisedBrush}" CornerRadius="8" Padding="8,2"><TextBlock Text="Soon" FontSize="11" Foreground="{StaticResource TextSoftBrush}" /></Border><TextBlock Text="FastFlags" /></DockPanel>
-                            </RadioButton>
+                            <RadioButton Style="{StaticResource NavItem}" Tag="fastflags" Content="FastFlags" Checked="OnNavChecked" />
                             <RadioButton Style="{StaticResource NavItem}" Tag="Mods" Checked="OnNavChecked">
                                 <DockPanel><Border DockPanel.Dock="Right" Background="{StaticResource RaisedBrush}" CornerRadius="8" Padding="8,2"><TextBlock Text="Soon" FontSize="11" Foreground="{StaticResource TextSoftBrush}" /></Border><TextBlock Text="Mods" /></DockPanel>
                             </RadioButton>
@@ -105,6 +103,40 @@
                                 </DockPanel>
                             </Border>
 
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- FastFlags: controls are built from FastFlagCatalog in code -->
+                    <ScrollViewer x:Name="FastFlagsPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="56,40">
+                            <TextBlock Text="FastFlags" Style="{StaticResource HeadingText}" />
+                            <TextBlock Style="{StaticResource MutedText}" FontSize="14" Margin="0,6,0,24"
+                                       Text="Only flags on Roblox's allowlist do anything. Applied the next time Roblox launches." />
+
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Presets" FontSize="15" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="PresetDescription" Style="{StaticResource MutedText}" Margin="0,4,0,12" />
+                                    <WrapPanel x:Name="PresetPills" />
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel x:Name="FlagOptionCards" />
+                            <StackPanel x:Name="FlagSwitchCards" />
+
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Advanced" FontSize="15" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,12"
+                                               Text="Every flag the launcher will write, as JSON. Edit and save to add your own." />
+                                    <TextBox x:Name="RawFlagsBox" Style="{StaticResource CodeBox}" Height="180" />
+                                    <WrapPanel Margin="0,12,0,0">
+                                        <Button Style="{StaticResource SecondaryButton}" Content="Save flags" Margin="0,0,12,0" Click="OnSaveRawFlagsClicked" />
+                                        <Button Style="{StaticResource SecondaryButton}" Content="Reset all flags" Click="OnResetFlagsClicked" />
+                                    </WrapPanel>
+                                    <TextBlock x:Name="RawFlagsStatus" Style="{StaticResource MutedText}" Margin="0,12,0,0" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
 
