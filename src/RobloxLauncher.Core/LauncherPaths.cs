@@ -18,6 +18,8 @@ public sealed class LauncherPaths(string root)
 
     public string StateFile => Path.Combine(Root, "state.json");
 
+    public string SettingsFile => Path.Combine(Root, "settings.json");
+
     public string InstallLockFile => Path.Combine(Root, "install.lock");
 
     public void EnsureCreated()

@@ -1,10 +1,11 @@
 using System.Windows;
+using System.Windows.Input;
 using RobloxLauncher.Core;
 using RobloxLauncher.Core.Install;
 
 namespace RobloxLauncher;
 
-/// <summary>Small window shown while checking for updates, downloading and launching.</summary>
+/// <summary>The launch window: shown while the launcher updates (if needed) and starts Roblox.</summary>
 public partial class ProgressWindow : Window
 {
     private readonly CancellationTokenSource _cancel = new();
@@ -13,6 +14,7 @@ public partial class ProgressWindow : Window
     {
         InitializeComponent();
         Title = AppInfo.Name;
+        NameText.Text = AppInfo.Name;
     }
 
     /// <summary>Cancelled by the Cancel button or by closing the window.</summary>
@@ -21,33 +23,15 @@ public partial class ProgressWindow : Window
     public void Report(InstallProgress progress)
     {
         if (_cancel.IsCancellationRequested) return;
-
-        StatusText.Text = progress.Stage switch
-        {
-            InstallStage.CheckingForUpdates => "Checking for updates…",
-            InstallStage.FetchingManifest => "Getting the package list…",
-            InstallStage.Downloading => "Downloading Roblox…",
-            InstallStage.Extracting => "Installing…",
-            InstallStage.Launching => "Starting Roblox…",
-            _ => StatusText.Text,
-        };
-
-        if (progress.Fraction is double fraction)
-        {
-            Bar.IsIndeterminate = false;
-            Bar.Value = fraction * 100;
-        }
-        else
-        {
-            Bar.IsIndeterminate = true;
-        }
-
-        DetailText.Text = progress.Stage == InstallStage.Downloading && progress.Total > 0
-            ? $"{ToMegabytes(progress.Done):0.0} / {ToMegabytes(progress.Total):0.0} MB"
-            : progress.Detail ?? "";
+        ProgressText.Apply(progress, StatusText, DetailText, Bar);
     }
 
-    private static double ToMegabytes(long bytes) => bytes / 1024d / 1024d;
+    private void OnMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ButtonState == MouseButtonState.Pressed) DragMove();
+    }
+
+    private void OnSettingsClicked(object sender, RoutedEventArgs e) => ((App)Application.Current).OpenSettings();
 
     private void OnCancelClicked(object sender, RoutedEventArgs e)
     {

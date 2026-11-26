@@ -2,12 +2,14 @@ namespace RobloxLauncher.Core.Launch;
 
 public enum LauncherCommand
 {
-    /// <summary>Update if needed, then start Roblox (with a game link if one was given).</summary>
+    /// <summary>Update if needed, then start Roblox: a game link joins that game, no link opens the Roblox app.</summary>
     Launch,
     /// <summary>Make this launcher handle roblox-player: and roblox: links.</summary>
     Register,
     /// <summary>Give the links back to whatever handled them before.</summary>
     Unregister,
+    /// <summary>Open the settings window instead of launching Roblox.</summary>
+    Settings,
 }
 
 /// <summary>What the launcher was asked to do, parsed from its command line.</summary>
@@ -21,6 +23,8 @@ public sealed partial record LaunchRequest(LauncherCommand Command, string? Uri)
                 return new LaunchRequest(LauncherCommand.Register, null);
             if (arg.Equals("--unregister", StringComparison.OrdinalIgnoreCase))
                 return new LaunchRequest(LauncherCommand.Unregister, null);
+            if (arg.Equals("--settings", StringComparison.OrdinalIgnoreCase))
+                return new LaunchRequest(LauncherCommand.Settings, null);
             if (IsRobloxUri(arg))
                 return new LaunchRequest(LauncherCommand.Launch, arg);
         }
