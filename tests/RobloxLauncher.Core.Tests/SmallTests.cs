@@ -30,6 +30,7 @@ public class LaunchRequestTests
     [Theory]
     [InlineData("--register", LauncherCommand.Register)]
     [InlineData("--UNREGISTER", LauncherCommand.Unregister)]
+    [InlineData("--settings", LauncherCommand.Settings)]
     public void Parses_commands(string arg, LauncherCommand expected) =>
         Assert.Equal(expected, LaunchRequest.Parse([arg]).Command);
 }

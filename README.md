@@ -34,17 +34,21 @@ nothing that changes gameplay.
 
 If you're offline, it launches the build you already have.
 
-## The main window
+## How you use it
 
-Open `RobloxLauncher.exe` yourself (no game link) and you get the main window:
+It replaces the official Roblox launcher, so it behaves like it:
 
-- **Home:** the installed Roblox version and a **PLAY** button that updates if needed and opens Roblox.
-- **Performance:** switches applied every launch:
-  - *High CPU priority*: sets Roblox's process priority to High.
-  - *Use dedicated GPU*: the same per-app setting as Windows Settings › Display › Graphics (High performance).
-  - *Disable fullscreen optimizations*: the same checkbox as the .exe's Properties › Compatibility tab.
-  - *Close launcher after Roblox starts.*
-  The GPU and fullscreen switches are stored by Windows per .exe path, so they're moved to each new Roblox build
+- **Opening the launcher** (Start menu "RobloxLauncher", or the .exe) shows a small launch window, updates Roblox if
+  needed and opens the Roblox app. **Clicking Play on roblox.com** does the same, then joins that game.
+- **Settings** open from the gear on the launch window, the Start menu "RobloxLauncher Settings" shortcut, or
+  `RobloxLauncher.exe --settings`. Changes save immediately and apply the next time Roblox launches.
+  - *Performance:*
+    - *High CPU priority*: sets Roblox's process priority to High.
+    - *Use dedicated GPU*: the same per-app setting as Windows Settings › Display › Graphics (High performance).
+    - *Disable fullscreen optimizations*: the same checkbox as the .exe's Properties › Compatibility tab.
+  - *General:* re-register or give back the Roblox links, open the logs folder, reinstall Roblox.
+
+The GPU and fullscreen switches are stored by Windows per .exe path, so they're moved to each new Roblox build
   and removed from old ones. Only entries under the launcher's own `Versions` folder are ever touched.
 - **Settings:** re-register or give back the Roblox links, open the logs folder, reinstall Roblox.
 
@@ -76,16 +80,17 @@ You need Windows, the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet
   dotnet publish src/RobloxLauncher -p:PublishProfile=win-x64
   ```
   This puts a ~1.4 MB `RobloxLauncher.exe` (mostly the bundled fonts) in `publish\`. Put it somewhere permanent (e.g. `%LocalAppData%\Programs\RobloxLauncher\`)
-  and run it once. Links are registered to wherever the .exe is, and re-registered each time it runs.
+  and run it once. Links and Start menu shortcuts are pointed at wherever the .exe is, each time it runs.
 
 ### Commands
 
 | Command | Does |
 | --- | --- |
-| `RobloxLauncher.exe` | Open the main window |
+| `RobloxLauncher.exe` | Update if needed, open the Roblox app |
+| `RobloxLauncher.exe --settings` | Open the settings window |
 | `RobloxLauncher.exe roblox-player:...` | Update if needed, join that game (this is what the website calls) |
-| `RobloxLauncher.exe --register` | Only take over `roblox-player:` / `roblox:` links |
-| `RobloxLauncher.exe --unregister` | Give the links back to the official Roblox launcher |
+| `RobloxLauncher.exe --register` | Only take over `roblox-player:` / `roblox:` links and add Start menu shortcuts |
+| `RobloxLauncher.exe --unregister` | Give the links back to the official Roblox launcher, remove the shortcuts |
 
 ## Project layout
 
@@ -99,8 +104,9 @@ src/RobloxLauncher.Core/   platform-neutral logic, fully unit tested
   Tweaks/                  performance tweaks (registry logic behind an interface, so it's testable)
 src/RobloxLauncher/        WPF app
   Themes/Theme.xaml        colours, fonts, button/switch/nav styles
-  MainWindow.xaml          Home / Performance / Settings
-  ProgressWindow.xaml      shown when a game link opens the launcher
+  ProgressWindow.xaml      the launch window (update → start Roblox), with a settings gear
+  SettingsWindow.xaml      Performance / General settings
+  Shortcuts.cs             Start menu shortcuts
   LaunchFlow.cs            update → apply tweaks → start Roblox
   ProtocolRegistrar.cs     roblox-player: link handler
   RegistryValues.cs        real HKCU registry access for the tweaks

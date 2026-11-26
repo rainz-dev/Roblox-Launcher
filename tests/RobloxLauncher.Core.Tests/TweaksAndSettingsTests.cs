@@ -100,7 +100,15 @@ public class SettingsStoreTests
         Assert.False(settings.HighPriority);
         Assert.False(settings.UseDedicatedGpu);
         Assert.False(settings.DisableFullscreenOptimizations);
-        Assert.True(settings.CloseAfterLaunch);
+    }
+
+    [Fact]
+    public void Ignores_settings_from_older_versions()
+    {
+        using var temp = new TempDir();
+        string file = Path.Combine(temp.Path, "settings.json");
+        File.WriteAllText(file, """{"HighPriority":true,"CloseAfterLaunch":false}""");
+        Assert.True(new SettingsStore(file).Load().HighPriority);
     }
 
     [Fact]
@@ -108,11 +116,12 @@ public class SettingsStoreTests
     {
         using var temp = new TempDir();
         var store = new SettingsStore(Path.Combine(temp.Path, "sub", "settings.json"));
-        store.Save(new LauncherSettings { HighPriority = true, CloseAfterLaunch = false });
+        store.Save(new LauncherSettings { HighPriority = true, UseDedicatedGpu = true });
 
         var loaded = store.Load();
         Assert.True(loaded.HighPriority);
-        Assert.False(loaded.CloseAfterLaunch);
+        Assert.True(loaded.UseDedicatedGpu);
+        Assert.False(loaded.DisableFullscreenOptimizations);
     }
 
     [Fact]
@@ -121,7 +130,7 @@ public class SettingsStoreTests
         using var temp = new TempDir();
         string file = Path.Combine(temp.Path, "settings.json");
         File.WriteAllText(file, "{ nope");
-        Assert.True(new SettingsStore(file).Load().CloseAfterLaunch);
+        Assert.False(new SettingsStore(file).Load().HighPriority);
     }
 }
 

@@ -5,7 +5,7 @@ using RobloxLauncher.Core.Install;
 
 namespace RobloxLauncher;
 
-/// <summary>Small window shown while a game link updates and starts Roblox.</summary>
+/// <summary>The launch window: shown while the launcher updates (if needed) and starts Roblox.</summary>
 public partial class ProgressWindow : Window
 {
     private readonly CancellationTokenSource _cancel = new();
@@ -30,6 +30,8 @@ public partial class ProgressWindow : Window
     {
         if (e.ButtonState == MouseButtonState.Pressed) DragMove();
     }
+
+    private void OnSettingsClicked(object sender, RoutedEventArgs e) => ((App)Application.Current).OpenSettings();
 
     private void OnCancelClicked(object sender, RoutedEventArgs e)
     {

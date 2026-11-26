@@ -11,7 +11,4 @@ public sealed class LauncherSettings
 
     /// <summary>Turn off Windows "fullscreen optimizations" for Roblox.</summary>
     public bool DisableFullscreenOptimizations { get; set; }
-
-    /// <summary>Close the launcher window after pressing Play once Roblox has started.</summary>
-    public bool CloseAfterLaunch { get; set; } = true;
 }

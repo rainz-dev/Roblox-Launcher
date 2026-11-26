@@ -1,12 +1,21 @@
 using System.Windows;
 using RobloxLauncher.Core;
+using RobloxLauncher.Core.Install;
 using RobloxLauncher.Core.Launch;
 using RobloxLauncher.Core.Settings;
 
 namespace RobloxLauncher;
 
+/// <summary>
+/// Opening the launcher (or a game link) shows the small launch window, updates if needed and starts Roblox,
+/// like the official launcher. Settings live in a separate window: --settings, the Start menu shortcut,
+/// or the gear on the launch window.
+/// </summary>
 public partial class App : Application
 {
+    private SettingsWindow? _settingsWindow;
+    private bool _launching;
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -21,42 +30,71 @@ public partial class App : Application
         switch (request.Command)
         {
             case LauncherCommand.Register:
-                RunAndExit(() => ProtocolRegistrar.Register(exePath), "Roblox links will now open with this launcher.");
+                RunAndExit(() => { ProtocolRegistrar.Register(exePath); Shortcuts.Create(exePath); },
+                    "Roblox links will now open with this launcher.");
                 return;
             case LauncherCommand.Unregister:
-                RunAndExit(ProtocolRegistrar.Unregister, "Roblox links were given back to the official Roblox launcher.");
+                RunAndExit(() => { ProtocolRegistrar.Unregister(); Shortcuts.Remove(); },
+                    "Roblox links were given back to the official Roblox launcher.");
                 return;
         }
 
-        // Re-register every launch so the links follow the .exe if you move it.
-        TryRegisterLinks(exePath);
+        // Every run: make sure links and Start menu shortcuts point at this .exe (it may have moved).
+        Integrate(exePath);
 
-        if (request.Uri is null)
+        if (request.Command == LauncherCommand.Settings)
         {
-            // Opened by you: show the main window.
-            new MainWindow().Show();
+            OpenSettings();
             return;
         }
 
-        // Opened by a game link from the website: update, start the game, close.
+        await LaunchAsync(request.Uri, paths);
+    }
+
+    private async Task LaunchAsync(string? uri, LauncherPaths paths)
+    {
         var window = new ProgressWindow();
         window.Show();
+        _launching = true;
         try
         {
             var settings = new SettingsStore(paths.SettingsFile).Load();
-            await LaunchFlow.RunAsync(request.Uri, settings, new Progress<Core.Install.InstallProgress>(window.Report), window.CancellationToken);
-            Shutdown(0);
+            await LaunchFlow.RunAsync(uri, settings, new Progress<InstallProgress>(window.Report), window.CancellationToken);
         }
         catch (OperationCanceledException) when (window.CancellationToken.IsCancellationRequested)
         {
             Log.Info("Cancelled by user.");
-            Shutdown(1);
         }
         catch (Exception ex)
         {
             ShowError(ex);
-            Shutdown(1);
         }
+        finally
+        {
+            _launching = false;
+        }
+
+        window.Close();
+        // If the settings window was opened from the gear, keep running until it's closed.
+        if (_settingsWindow is null) Shutdown(0);
+    }
+
+    /// <summary>Opens the settings window, or brings it to the front if it's already open.</summary>
+    internal void OpenSettings()
+    {
+        if (_settingsWindow is not null)
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+        _settingsWindow = new SettingsWindow();
+        _settingsWindow.Show();
+    }
+
+    internal void OnSettingsClosed()
+    {
+        _settingsWindow = null;
+        if (!_launching) Shutdown(0); // otherwise the launch finishes first, then exits
     }
 
     internal static void ShowError(Exception ex)
@@ -66,7 +104,7 @@ public partial class App : Application
         MessageBox.Show($"{message}\n\nLog file: {Log.FilePath}", AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
-    private static void TryRegisterLinks(string exePath)
+    private static void Integrate(string exePath)
     {
         try
         {
@@ -75,6 +113,15 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Warn($"Couldn't register Roblox links: {ex.Message}");
+        }
+
+        try
+        {
+            Shortcuts.Create(exePath);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Couldn't create Start menu shortcuts: {ex.Message}");
         }
     }
 
