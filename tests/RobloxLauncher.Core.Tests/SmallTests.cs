@@ -53,8 +53,23 @@ public class SafeZipTests
         Assert.Equal("font", File.ReadAllText(Path.Combine(temp.Path, "out", "fonts", "Arial.ttf")));
     }
 
+    [Fact]
+    public void Treats_leading_separators_and_root_entries_as_zip_relative()
+    {
+        // Real Roblox zips contain a "\\" directory entry and entries like "\\fonts\\a.ttf".
+        using var temp = new TempDir();
+        string zip = Path.Combine(temp.Path, "a.zip");
+        File.WriteAllBytes(zip, TestZip.CreateWithDirectories(["\\", "\\fonts\\"], ("\\fonts\\a.ttf", "font"), ("/b.txt", "b")));
+
+        SafeZip.ExtractToDirectory(zip, Path.Combine(temp.Path, "out"));
+
+        Assert.Equal("font", File.ReadAllText(Path.Combine(temp.Path, "out", "fonts", "a.ttf")));
+        Assert.Equal("b", File.ReadAllText(Path.Combine(temp.Path, "out", "b.txt")));
+    }
+
     [Theory]
     [InlineData("..\\..\\evil.txt")]
+    [InlineData("\\..\\evil.txt")]
     [InlineData("../evil.txt")]
     public void Refuses_entries_outside_the_target(string entryName)
     {

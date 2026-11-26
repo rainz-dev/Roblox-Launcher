@@ -17,7 +17,11 @@ public static class SafeZip
         using var archive = ZipFile.OpenRead(zipPath);
         foreach (var entry in archive.Entries)
         {
-            string relative = entry.FullName.Replace('\\', '/');
+            // Roblox's zips use backslashes and include a root entry named "\", and some entries start
+            // with a separator. Treat those as relative to the zip root, not to the drive root.
+            string relative = entry.FullName.Replace('\\', '/').TrimStart('/');
+            if (relative.Length == 0) continue;
+
             string target = Path.GetFullPath(Path.Combine(root, relative));
 
             if (!target.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase) &&

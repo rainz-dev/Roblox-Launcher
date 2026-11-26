@@ -46,6 +46,21 @@ internal static class TestZip
         return buffer.ToArray();
     }
 
+    public static byte[] CreateWithDirectories(string[] directories, params (string Name, string Content)[] entries)
+    {
+        using var buffer = new MemoryStream();
+        using (var zip = new ZipArchive(buffer, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (string dir in directories) zip.CreateEntry(dir);
+            foreach (var (name, content) in entries)
+            {
+                using var writer = new StreamWriter(zip.CreateEntry(name).Open());
+                writer.Write(content);
+            }
+        }
+        return buffer.ToArray();
+    }
+
     public static string Md5(byte[] data) => Convert.ToHexStringLower(MD5.HashData(data));
 }
 
