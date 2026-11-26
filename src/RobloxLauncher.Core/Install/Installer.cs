@@ -27,6 +27,21 @@ public sealed class Installer(DeploymentClient client, LauncherPaths paths)
         InstallState.Load(paths.StateFile)?.VersionGuid == versionGuid &&
         File.Exists(Path.Combine(GetInstallDirectory(versionGuid), PlayerExeName));
 
+    /// <summary>
+    /// Deletes every installed Roblox build so the next launch reinstalls (cached downloads are kept and re-checked).
+    /// Returns false if some files were in use, e.g. Roblox is still running.
+    /// </summary>
+    public static bool RemoveInstalledBuilds(LauncherPaths paths)
+    {
+        if (File.Exists(paths.StateFile)) File.Delete(paths.StateFile);
+        if (!Directory.Exists(paths.Versions)) return true;
+
+        bool allRemoved = true;
+        foreach (string dir in Directory.EnumerateDirectories(paths.Versions))
+            allRemoved &= TryDeleteDirectory(dir);
+        return allRemoved;
+    }
+
     /// <summary>Makes sure <paramref name="version"/> is installed and returns its folder.</summary>
     public async Task<string> EnsureInstalledAsync(
         ClientVersion version, IProgress<InstallProgress>? progress, CancellationToken ct)

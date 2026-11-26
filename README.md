@@ -13,8 +13,8 @@ nothing that changes gameplay.
 
 | Step | What | State |
 | --- | --- | --- |
-| 1 | Core bootstrapper: link handling, download/update, launch | ✅ this PR |
-| 2 | Settings GUI + performance tweaks | planned |
+| 1 | Core bootstrapper: link handling, download/update, launch | ✅ done |
+| 2 | Custom UI + performance tweaks | ✅ this PR |
 | 3 | FastFlag editor with presets | planned |
 | 4 | Mods (content-folder swaps) | planned |
 | 5 | Discord rich presence, server region | planned |
@@ -34,6 +34,23 @@ nothing that changes gameplay.
 
 If you're offline, it launches the build you already have.
 
+## The main window
+
+Open `RobloxLauncher.exe` yourself (no game link) and you get the main window:
+
+- **Home:** the installed Roblox version and a **PLAY** button that updates if needed and opens Roblox.
+- **Performance:** switches applied every launch:
+  - *High CPU priority*: sets Roblox's process priority to High.
+  - *Use dedicated GPU*: the same per-app setting as Windows Settings › Display › Graphics (High performance).
+  - *Disable fullscreen optimizations*: the same checkbox as the .exe's Properties › Compatibility tab.
+  - *Close launcher after Roblox starts.*
+  The GPU and fullscreen switches are stored by Windows per .exe path, so they're moved to each new Roblox build
+  and removed from old ones. Only entries under the launcher's own `Versions` folder are ever touched.
+- **Settings:** re-register or give back the Roblox links, open the logs folder, reinstall Roblox.
+
+The look (colours, corner radii, fonts, button styles) is all in `src/RobloxLauncher/Themes/Theme.xaml`.
+Fonts are Inter and Space Grotesk, bundled under the SIL Open Font License (see `src/RobloxLauncher/Fonts/`).
+
 Files live in `%LocalAppData%\RobloxLauncher\`:
 
 ```
@@ -41,6 +58,7 @@ Versions\version-xxxx\   the installed Roblox build
 Downloads\               package cache (by MD5)
 Logs\                    last 10 runs, check here first when something breaks
 state.json               which build is installed
+settings.json            your Performance switches
 ```
 
 ## Build and run
@@ -57,14 +75,14 @@ You need Windows, the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet
   ```
   dotnet publish src/RobloxLauncher -p:PublishProfile=win-x64
   ```
-  This puts a ~230 KB `RobloxLauncher.exe` in `publish\`. Put it somewhere permanent (e.g. `%LocalAppData%\Programs\RobloxLauncher\`)
+  This puts a ~1.4 MB `RobloxLauncher.exe` (mostly the bundled fonts) in `publish\`. Put it somewhere permanent (e.g. `%LocalAppData%\Programs\RobloxLauncher\`)
   and run it once. Links are registered to wherever the .exe is, and re-registered each time it runs.
 
 ### Commands
 
 | Command | Does |
 | --- | --- |
-| `RobloxLauncher.exe` | Update if needed, open Roblox |
+| `RobloxLauncher.exe` | Open the main window |
 | `RobloxLauncher.exe roblox-player:...` | Update if needed, join that game (this is what the website calls) |
 | `RobloxLauncher.exe --register` | Only take over `roblox-player:` / `roblox:` links |
 | `RobloxLauncher.exe --unregister` | Give the links back to the official Roblox launcher |
@@ -77,13 +95,21 @@ src/RobloxLauncher.Core/   platform-neutral logic, fully unit tested
   Install/                 installer, safe unzip, install state
   Launch/                  command-line parsing, starting Roblox
   Bootstrapper.cs          check → install → return folder to launch
-src/RobloxLauncher/        WPF app: progress window, registry link handler, wiring
+  Settings/                settings.json load/save
+  Tweaks/                  performance tweaks (registry logic behind an interface, so it's testable)
+src/RobloxLauncher/        WPF app
+  Themes/Theme.xaml        colours, fonts, button/switch/nav styles
+  MainWindow.xaml          Home / Performance / Settings
+  ProgressWindow.xaml      shown when a game link opens the launcher
+  LaunchFlow.cs            update → apply tweaks → start Roblox
+  ProtocolRegistrar.cs     roblox-player: link handler
+  RegistryValues.cs        real HKCU registry access for the tweaks
 tests/                     xUnit tests against a fake CDN (no network)
 ```
 
-## Known limits (step 1)
+## Known limits
 
 - Only the `production` (LIVE) channel. Roblox beta channels aren't supported yet.
-- No settings window yet; that's step 2.
+- FastFlags, Mods and Servers pages are placeholders until their steps.
 - If Roblox adds a new package to its builds, installs stop with a clear error until it's added to `PackageMap.cs`.
   The test `Every_package_in_real_manifest_is_mapped_or_ignored` checks this against a saved real manifest.

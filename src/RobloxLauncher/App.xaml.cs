@@ -1,8 +1,7 @@
 using System.Windows;
 using RobloxLauncher.Core;
-using RobloxLauncher.Core.Deployment;
-using RobloxLauncher.Core.Install;
 using RobloxLauncher.Core.Launch;
+using RobloxLauncher.Core.Settings;
 
 namespace RobloxLauncher;
 
@@ -18,58 +17,79 @@ public partial class App : Application
 
         var request = LaunchRequest.Parse(e.Args);
         string exePath = Environment.ProcessPath!;
-        ProgressWindow? window = null;
 
+        switch (request.Command)
+        {
+            case LauncherCommand.Register:
+                RunAndExit(() => ProtocolRegistrar.Register(exePath), "Roblox links will now open with this launcher.");
+                return;
+            case LauncherCommand.Unregister:
+                RunAndExit(ProtocolRegistrar.Unregister, "Roblox links were given back to the official Roblox launcher.");
+                return;
+        }
+
+        // Re-register every launch so the links follow the .exe if you move it.
+        TryRegisterLinks(exePath);
+
+        if (request.Uri is null)
+        {
+            // Opened by you: show the main window.
+            new MainWindow().Show();
+            return;
+        }
+
+        // Opened by a game link from the website: update, start the game, close.
+        var window = new ProgressWindow();
+        window.Show();
         try
         {
-            switch (request.Command)
-            {
-                case LauncherCommand.Register:
-                    ProtocolRegistrar.Register(exePath);
-                    ShowInfo("Roblox links will now open with this launcher.");
-                    Shutdown(0);
-                    return;
-
-                case LauncherCommand.Unregister:
-                    ProtocolRegistrar.Unregister();
-                    ShowInfo("Roblox links were given back to the official Roblox launcher.");
-                    Shutdown(0);
-                    return;
-            }
-
-            // Re-register every launch so the links follow the .exe if you move it.
-            ProtocolRegistrar.Register(exePath);
-
-            window = new ProgressWindow();
-            window.Show();
-
-            using var http = DeploymentClient.CreateHttpClient();
-            var client = new DeploymentClient(http);
-            var bootstrapper = new Bootstrapper(client, new Installer(client, paths), paths);
-
-            string installDir = await bootstrapper.PrepareAsync(
-                new Progress<InstallProgress>(window.Report), window.CancellationToken);
-
-            window.Report(new InstallProgress(InstallStage.Launching));
-            RobloxProcess.Start(installDir, request.Uri);
-            Log.Info("Roblox started.");
+            var settings = new SettingsStore(paths.SettingsFile).Load();
+            await LaunchFlow.RunAsync(request.Uri, settings, new Progress<Core.Install.InstallProgress>(window.Report), window.CancellationToken);
             Shutdown(0);
         }
-        catch (OperationCanceledException) when (window?.CancellationToken.IsCancellationRequested == true)
+        catch (OperationCanceledException) when (window.CancellationToken.IsCancellationRequested)
         {
             Log.Info("Cancelled by user.");
             Shutdown(1);
         }
         catch (Exception ex)
         {
-            Log.Error("Launch failed.", ex);
-            string message = ex is BootstrapException ? ex.Message : $"Something went wrong: {ex.Message}";
-            MessageBox.Show($"{message}\n\nLog file: {Log.FilePath}", AppInfo.Name,
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError(ex);
             Shutdown(1);
         }
     }
 
-    private static void ShowInfo(string message) =>
-        MessageBox.Show(message, AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Information);
+    internal static void ShowError(Exception ex)
+    {
+        Log.Error("Launch failed.", ex);
+        string message = ex is BootstrapException ? ex.Message : $"Something went wrong: {ex.Message}";
+        MessageBox.Show($"{message}\n\nLog file: {Log.FilePath}", AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private static void TryRegisterLinks(string exePath)
+    {
+        try
+        {
+            ProtocolRegistrar.Register(exePath);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Couldn't register Roblox links: {ex.Message}");
+        }
+    }
+
+    private void RunAndExit(Action action, string successMessage)
+    {
+        try
+        {
+            action();
+            MessageBox.Show(successMessage, AppInfo.Name, MessageBoxButton.OK, MessageBoxImage.Information);
+            Shutdown(0);
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+            Shutdown(1);
+        }
+    }
 }
