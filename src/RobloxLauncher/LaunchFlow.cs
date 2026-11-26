@@ -3,6 +3,7 @@ using System.IO;
 using System.Security;
 using RobloxLauncher.Core;
 using RobloxLauncher.Core.Deployment;
+using RobloxLauncher.Core.FastFlags;
 using RobloxLauncher.Core.Install;
 using RobloxLauncher.Core.Launch;
 using RobloxLauncher.Core.Settings;
@@ -25,6 +26,16 @@ internal static class LaunchFlow
         progress.Report(new InstallProgress(InstallStage.Launching));
 
         string exe = Path.Combine(installDir, Installer.PlayerExeName);
+        try
+        {
+            // Written every launch, so flags survive Roblox updates (each update is a new folder).
+            FastFlagFile.WriteTo(installDir, settings.FastFlags);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn($"Couldn't write FastFlags: {ex.Message}");
+        }
+
         try
         {
             new PerformanceTweaks(RegistryValues.GpuPreferences, RegistryValues.CompatibilityLayers, paths.Versions)

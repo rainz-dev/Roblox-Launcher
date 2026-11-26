@@ -29,6 +29,7 @@ public partial class SettingsWindow : Window
         TitleText.Text = Title;
         VersionFooter.Text = $"Launcher {AppInfo.Version}";
         DataContext = _settings; // the Performance switches bind to these properties
+        BuildFastFlagControls();
         ShowPage("performance");
     }
 
@@ -60,16 +61,19 @@ public partial class SettingsWindow : Window
     private void ShowPage(string page)
     {
         PerformancePage.Visibility = page == "performance" ? Visibility.Visible : Visibility.Collapsed;
+        FastFlagsPage.Visibility = page == "fastflags" ? Visibility.Visible : Visibility.Collapsed;
         GeneralPage.Visibility = page == "general" ? Visibility.Visible : Visibility.Collapsed;
 
-        bool soon = page is not ("performance" or "general");
+        bool soon = page is not ("performance" or "fastflags" or "general");
         SoonPage.Visibility = soon ? Visibility.Visible : Visibility.Collapsed;
         if (soon) SoonTitle.Text = page;
     }
 
     // ---- Performance ----
 
-    private void OnSettingChanged(object sender, RoutedEventArgs e)
+    private void OnSettingChanged(object sender, RoutedEventArgs e) => SaveSettings();
+
+    private void SaveSettings()
     {
         try
         {

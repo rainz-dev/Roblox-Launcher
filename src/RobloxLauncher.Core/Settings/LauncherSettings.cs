@@ -11,4 +11,7 @@ public sealed class LauncherSettings
 
     /// <summary>Turn off Windows "fullscreen optimizations" for Roblox.</summary>
     public bool DisableFullscreenOptimizations { get; set; }
+
+    /// <summary>Fast Flags written to Roblox's ClientAppSettings.json on every launch.</summary>
+    public Dictionary<string, string> FastFlags { get; set; } = new(StringComparer.Ordinal);
 }

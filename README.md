@@ -14,8 +14,8 @@ nothing that changes gameplay.
 | Step | What | State |
 | --- | --- | --- |
 | 1 | Core bootstrapper: link handling, download/update, launch | ✅ done |
-| 2 | Custom UI + performance tweaks | ✅ this PR |
-| 3 | FastFlag editor with presets | planned |
+| 2 | Custom UI + performance tweaks | ✅ done |
+| 3 | FastFlag editor with presets | ✅ this PR |
 | 4 | Mods (content-folder swaps) | planned |
 | 5 | Discord rich presence, server region | planned |
 | 6 | Multiple Roblox windows | planned |
@@ -46,6 +46,13 @@ It replaces the official Roblox launcher, so it behaves like it:
     - *High CPU priority*: sets Roblox's process priority to High.
     - *Use dedicated GPU*: the same per-app setting as Windows Settings › Display › Graphics (High performance).
     - *Disable fullscreen optimizations*: the same checkbox as the .exe's Properties › Compatibility tab.
+  - *FastFlags:* presets (Competitive, Balanced, Showcase), one-click options (graphics API, render quality,
+    texture quality, anti-aliasing, grass, distant detail), switches (exclusive fullscreen with Alt+Enter, disable
+    DPI scaling, gray sky, still grass) and a raw JSON editor. Since Sept 2025 Roblox only honors
+    [allowlisted flags](https://devforum.roblox.com/t/allowlist-for-local-client-configuration-via-fast-flags/3966569);
+    the editor warns about any others. The list lives in `FastFlags/FastFlagAllowlist.cs`, and the options and
+    presets in `FastFlags/FastFlagCatalog.cs`. Flags are written to `ClientSettings\ClientAppSettings.json` in
+    the Roblox install on every launch, so they survive updates.
   - *General:* re-register or give back the Roblox links, open the logs folder, reinstall Roblox.
 
 The GPU and fullscreen switches are stored by Windows per .exe path, so they're moved to each new Roblox build
@@ -100,6 +107,7 @@ src/RobloxLauncher.Core/   platform-neutral logic, fully unit tested
   Install/                 installer, safe unzip, install state
   Launch/                  command-line parsing, starting Roblox
   Bootstrapper.cs          check → install → return folder to launch
+  FastFlags/               allowlist, options/presets, ClientAppSettings.json read/write
   Settings/                settings.json load/save
   Tweaks/                  performance tweaks (registry logic behind an interface, so it's testable)
 src/RobloxLauncher/        WPF app
@@ -116,6 +124,7 @@ tests/                     xUnit tests against a fake CDN (no network)
 ## Known limits
 
 - Only the `production` (LIVE) channel. Roblox beta channels aren't supported yet.
-- FastFlags, Mods and Servers pages are placeholders until their steps.
+- Mods and Servers pages are placeholders until their steps.
+- FastFlag values for quality levels come from community testing; Roblox doesn't document them.
 - If Roblox adds a new package to its builds, installs stop with a clear error until it's added to `PackageMap.cs`.
   The test `Every_package_in_real_manifest_is_mapped_or_ignored` checks this against a saved real manifest.
