@@ -11,7 +11,7 @@ public enum LauncherCommand
 }
 
 /// <summary>What the launcher was asked to do, parsed from its command line.</summary>
-public sealed record LaunchRequest(LauncherCommand Command, string? Uri)
+public sealed partial record LaunchRequest(LauncherCommand Command, string? Uri)
 {
     public static LaunchRequest Parse(IReadOnlyList<string> args)
     {
@@ -26,6 +26,15 @@ public sealed record LaunchRequest(LauncherCommand Command, string? Uri)
         }
         return new LaunchRequest(LauncherCommand.Launch, null);
     }
+
+    /// <summary>
+    /// Hides the login ticket in a roblox-player: link ("gameinfo:...") so log files are safe to share.
+    /// </summary>
+    public static string RedactForLog(string text) =>
+        GameInfoTicket().Replace(text, "gameinfo:<redacted>");
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"gameinfo:[^+\s]*", System.Text.RegularExpressions.RegexOptions.IgnoreCase)]
+    private static partial System.Text.RegularExpressions.Regex GameInfoTicket();
 
     public static bool IsRobloxUri(string value) =>
         value.StartsWith("roblox-player:", StringComparison.OrdinalIgnoreCase) ||

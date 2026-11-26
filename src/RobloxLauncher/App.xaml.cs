@@ -14,7 +14,7 @@ public partial class App : Application
 
         var paths = LauncherPaths.Default;
         Log.Init(paths.Logs);
-        Log.Info($"{AppInfo.Name} {AppInfo.Version} started. Args: {string.Join(' ', e.Args)}");
+        Log.Info($"{AppInfo.Name} {AppInfo.Version} started. Args: {LaunchRequest.RedactForLog(string.Join(' ', e.Args))}");
 
         var request = LaunchRequest.Parse(e.Args);
         string exePath = Environment.ProcessPath!;

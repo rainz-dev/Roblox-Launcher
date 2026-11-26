@@ -20,6 +20,13 @@ public class LaunchRequestTests
     public void Ignores_non_roblox_links() =>
         Assert.Null(LaunchRequest.Parse(["https://example.com"]).Uri);
 
+    [Fact]
+    public void Redacts_login_ticket_from_logs()
+    {
+        string redacted = LaunchRequest.RedactForLog("roblox-player:1+launchmode:play+gameinfo:SECRET_TICKET-abc+launchtime:1");
+        Assert.Equal("roblox-player:1+launchmode:play+gameinfo:<redacted>+launchtime:1", redacted);
+    }
+
     [Theory]
     [InlineData("--register", LauncherCommand.Register)]
     [InlineData("--UNREGISTER", LauncherCommand.Unregister)]
